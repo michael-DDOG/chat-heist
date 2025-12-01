@@ -1,0 +1,236 @@
+CHAT HEIST - COMPLETE FILE STRUCTURE
+=====================================
+
+chat-heist/
+│
+├── 📚 DOCUMENTATION
+│   ├── README.md                     # Main project documentation
+│   ├── START_HERE.md                 # Welcome & quick navigation
+│   ├── QUICKSTART.md                 # 10-minute setup guide
+│   ├── GETTING_STARTED.md            # Detailed beginner guide
+│   ├── TELEGRAM_SETUP.md             # Complete Telegram bot setup
+│   ├── DEPLOYMENT.md                 # Production deployment guides
+│   ├── PROJECT_SUMMARY.md            # What's been built
+│   ├── PROJECT_STRUCTURE.txt         # This file
+│   └── LICENSE                       # MIT License
+│
+├── ⚙️  CONFIGURATION
+│   ├── package.json                  # Dependencies & scripts
+│   ├── tsconfig.json                 # TypeScript config
+│   ├── .env.example                  # Environment template
+│   ├── .npmrc                        # pnpm config
+│   ├── .gitignore                    # Git ignore rules
+│   ├── docker-compose.yml            # Local dev services
+│   ├── Dockerfile                    # Production image
+│   ├── vitest.config.ts              # Unit test config
+│   └── vitest.e2e.config.ts          # E2E test config
+│
+├── 🗄️  DATABASE
+│   └── prisma/
+│       ├── schema.prisma             # Database schema (8 models)
+│       └── seed.ts                   # Test data seeding
+│
+├── 🖥️  BACKEND (src/)
+│   ├── server.ts                     # Express app entry point
+│   │
+│   ├── bot/                          # Telegram Bot Integration
+│   │   ├── index.ts                  # Webhook handler
+│   │   ├── commands.ts               # Bot commands (/start, /play, /heist)
+│   │   ├── telegram.ts               # Telegram API wrappers
+│   │   └── verifyInitData.ts        # InitData HMAC verification
+│   │
+│   ├── api/                          # REST API Endpoints
+│   │   ├── auth.ts                   # POST /auth/verifyInitData
+│   │   ├── game.ts                   # POST /game/start, /game/complete
+│   │   ├── leaderboard.ts            # GET /leaderboard/global, /chat/:id
+│   │   ├── shop.ts                   # GET /shop/gear, POST /shop/buy
+│   │   ├── dailies.ts                # GET /dailies, POST /dailies/claim
+│   │   ├── me.ts                     # GET /me (profile)
+│   │   └── middleware/
+│   │       ├── auth.ts               # JWT session authentication
+│   │       └── rateLimit.ts          # Redis rate limiting
+│   │
+│   ├── core/                         # Game Logic
+│   │   ├── constants.ts              # Game configuration
+│   │   ├── scoring.ts                # Score calculation & validation
+│   │   ├── rng.ts                    # Seeded RNG (deterministic)
+│   │   └── antiCheat.ts              # Anti-cheat checks
+│   │
+│   ├── db/
+│   │   └── client.ts                 # Prisma client singleton
+│   │
+│   └── utils/
+│       ├── logger.ts                 # Pino logger
+│       └── redis.ts                  # Redis client & helpers
+│
+├── 🎮 FRONTEND (web/)
+│   ├── index.html                    # HTML entry point
+│   ├── vite.config.ts                # Vite bundler config
+│   │
+│   └── src/
+│       ├── main.ts                   # Phaser game initialization
+│       │
+│       ├── game/                     # Phaser 3 Game Scenes
+│       │   ├── BootScene.ts          # Authentication & init
+│       │   ├── MenuScene.ts          # Main menu
+│       │   ├── LobbyScene.ts         # Difficulty selection
+│       │   ├── HeistScene.ts         # Main gameplay (60s tapping)
+│       │   ├── EscapeScene.ts        # Bonus escape round (10s)
+│       │   ├── ResultsScene.ts       # Score submission & results
+│       │   ├── ShopScene.ts          # Gear shop
+│       │   │
+│       │   └── ui/
+│       │       ├── Buttons.ts        # UI components (planned)
+│       │       └── HUD.ts            # HUD elements (planned)
+│       │
+│       ├── net/
+│       │   └── api.ts                # Backend API client
+│       │
+│       └── state/
+│           └── store.ts              # Global game state
+│
+├── 🧪 TESTS (tests/)
+│   ├── unit/
+│   │   ├── verifyInitData.spec.ts   # InitData verification tests
+│   │   └── scoring.spec.ts          # Scoring system tests
+│   │
+│   └── e2e/
+│       └── webhook.e2e.spec.ts      # Webhook integration tests
+│
+├── 🛠️  SCRIPTS (scripts/)
+│   └── tunnel.js                     # Cloudflared tunnel script
+│
+└── 📮 POSTMAN (postman/)
+    └── ChatHeist.postman_collection.json  # API test collection
+
+
+FILE SUMMARY
+============
+
+Backend:
+  - TypeScript source files: 26
+  - API endpoints: 15+
+  - Bot commands: 5
+  - Middleware: 2
+  - Core logic modules: 4
+
+Frontend:
+  - Phaser scenes: 7
+  - UI components: 2 (planned)
+  - State management: 1
+  - API client: 1
+
+Database:
+  - Models: 8 (User, Chat, Run, Inventory, Leaderboard, DailyTask, Session, RateLimit)
+  - Enums: 3 (RunMode, GearType, LeaderboardScope)
+
+Tests:
+  - Unit test files: 2
+  - E2E test files: 1
+  - Test cases: 15+
+
+Documentation:
+  - Guides: 7
+  - Total pages: 50+
+
+Configuration:
+  - Config files: 9
+  - Docker files: 2
+
+
+KEY FEATURES
+============
+
+✅ Solo & Co-op gameplay
+✅ 5 difficulty levels
+✅ Energy system (refills over time)
+✅ Heat mechanic (betrayal penalty)
+✅ Gear shop with upgrades
+✅ Weekly leaderboards (global + per-chat)
+✅ Daily tasks with rewards
+✅ Server-side validation
+✅ Anti-cheat protection
+✅ Rate limiting
+✅ Session management
+✅ JWT authentication
+✅ Telegram Games Platform integration
+✅ WebApp support
+✅ Group chat support
+✅ Inline mode support
+
+
+TECH STACK
+==========
+
+Backend:
+  - Node.js 20+
+  - TypeScript 5
+  - Express 4
+  - Prisma ORM 5
+  - PostgreSQL 16
+  - Redis 7
+  - Pino (logging)
+  - Zod (validation)
+
+Frontend:
+  - Phaser 3.87
+  - Vite 5
+  - TypeScript 5
+  - Telegram WebApp API
+
+Testing:
+  - Vitest 2
+  - Supertest 7
+
+DevOps:
+  - Docker & Docker Compose
+  - pnpm (package manager)
+  - Cloudflared (tunneling)
+
+
+GETTING STARTED
+===============
+
+1. Clone and install:
+   pnpm install
+
+2. Start services:
+   docker compose up -d
+   pnpm db:dev
+
+3. Run development:
+   pnpm dev
+   pnpm tunnel (in new terminal)
+
+4. Configure webhook and play!
+
+For detailed instructions, see:
+  - QUICKSTART.md (fastest)
+  - GETTING_STARTED.md (detailed)
+  - START_HERE.md (navigation)
+
+
+DEPLOYMENT
+==========
+
+Supported platforms:
+  - Render.com (easiest)
+  - Railway.app
+  - Fly.io
+  - DigitalOcean
+  - Custom VPS
+
+See DEPLOYMENT.md for complete guides.
+
+
+CREDITS
+=======
+
+Built with:
+  - Telegram Bot API
+  - Phaser 3
+  - Prisma
+  - Express
+  - TypeScript
+
+License: MIT

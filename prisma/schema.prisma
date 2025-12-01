@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [uuidOssp(map: "uuid-ossp"), pgcrypto, citext]
+}
+
+model User {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tgUserId    BigInt   @unique
+  username    String?
+  firstName   String?
+  lastName    String?
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  // Game progression
+  energy      Int      @default(5)
+  heat        Int      @default(0)
+  gearLvl     Int      @default(1)
+  coinsTotal  Int      @default(0)
+
+  runs        Run[]
+  inventory   Inventory[]
+  leaderboard Leaderboard[]
+  dailyTasks  DailyTask[]
+  sessions    Session[]
+
+  @@index([tgUserId])
+  @@map("users")
+}
+
+model Chat {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tgChatId  BigInt   @unique
+  type      String   // 'group', 'supergroup', 'private'
+  title     String?
+  createdAt DateTime @default(now())
+
+  runs        Run[]
+  leaderboard Leaderboard[]
+
+  @@index([tgChatId])
+  @@map("chats")
+}
+
+model Run {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @db.Uuid
+  chatId     String?   @db.Uuid
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  mode       RunMode   @default(SOLO)
+  score      Int       @default(0)
+  cashEarned Int       @default(0)
+  success    Boolean   @default(false)
+  betrayUsed Boolean   @default(false)
+  difficulty Int       @default(1)
+
+  // Anti-cheat
+  seed       String?
+  nonce      String?
+  validated  Boolean   @default(false)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat  Chat?  @relation(fields: [chatId], references: [id], onDelete: SetNull)
+
+  @@index([userId, finishedAt])
+  @@index([chatId, finishedAt])
+  @@map("runs")
+}
+
+enum RunMode {
+  SOLO
+  COOP
+}
+
+model Inventory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  gear      GearType
+  level     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gear])
+  @@index([userId])
+  @@map("inventory")
+}
+
+enum GearType {
+  HACKER_RIG
+  DRILL
+  GETAWAY
+  MASK
+}
+
+model Leaderboard {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope         LeaderboardScope
+  chatId        String?          @db.Uuid
+  weekStartDate DateTime
+  userId        String           @db.Uuid
+  bestScore     Int
+  updatedAt     DateTime         @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat Chat? @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([scope, chatId, weekStartDate, userId])
+  @@index([scope, chatId, weekStartDate, bestScore])
+  @@map("leaderboard")
+}
+
+enum LeaderboardScope {
+  CHAT
+  GLOBAL
+}
+
+model DailyTask {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @db.Uuid
+  date          DateTime @default(now())
+  taskType      String
+  progress      Int      @default(0)
+  target        Int
+  rewardClaimed Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, taskType])
+  @@index([userId, date])
+  @@map("daily_tasks")
+}
+
+model Session {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  issuedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+model RateLimit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique
+  windowStart DateTime @default(now())
+  count       Int      @default(1)
+
+  @@index([key, windowStart])
+  @@map("rate_limits")
+}

@@ -1,0 +1,154 @@
+═══════════════════════════════════════════════════════════════════════════════
+  CHAT HEIST - RENDER DEPLOYMENT SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+📦 REPOSITORY
+  https://github.com/michael-DDOG/chat-heist
+
+═══════════════════════════════════════════════════════════════════════════════
+  1. RENDER.YAML CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Location: render.yaml
+
+Key Settings:
+  • Runtime: Node
+  • Build: pnpm install --frozen-lockfile && pnpm build && npx prisma generate
+  • Start: pnpm start
+  • Health Check: /healthz
+  • Auto-deploy: Enabled
+
+═══════════════════════════════════════════════════════════════════════════════
+  2. CODE CHANGES MADE
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ src/server.ts
+   - Already uses process.env.PORT (line 16)
+   - Added /healthz endpoint (returns 200 JSON)
+
+✅ package.json
+   - Added migrate:deploy script
+   - Added postdeploy hook (runs migrations automatically)
+
+✅ scripts/setWebhook.ts
+   - Uses APP_BASE_URL + /telegram/webhook
+   - No secrets logged
+
+═══════════════════════════════════════════════════════════════════════════════
+  3. ENVIRONMENT VARIABLES CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Paste these into Render Dashboard → Environment tab:
+
+[ ] TELEGRAM_BOT_TOKEN
+[ ] TELEGRAM_BOT_USERNAME  
+[ ] TELEGRAM_GAME_SHORT_NAME=CHAT_HEIST
+[ ] DATABASE_URL
+[ ] SUPABASE_URL
+[ ] SUPABASE_SERVICE_ROLE_KEY
+[ ] UPSTASH_REDIS_REST_URL
+[ ] UPSTASH_REDIS_REST_TOKEN
+[ ] WEBHOOK_SECRET
+[ ] JWT_SECRET
+[ ] APP_BASE_URL (leave empty initially)
+
+Note: All marked sync: false in render.yaml (you must add manually)
+
+═══════════════════════════════════════════════════════════════════════════════
+  4. DEPLOYMENT STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+Step 1: Create Render Service
+  1. Go to https://dashboard.render.com
+  2. New + → Web Service
+  3. Connect michael-DDOG/chat-heist
+  4. Paste environment variables from checklist above
+  5. Create Web Service
+
+Step 2: Wait for Initial Deploy
+  • Takes 5-10 minutes
+  • Monitor logs for errors
+  • Should see: "✅ Server running on port 10000"
+
+Step 3: Run Database Migrations
+  In Render Shell tab:
+  $ npm run migrate:deploy
+
+Step 4: Set APP_BASE_URL
+  1. Copy Render URL (e.g., https://chat-heist.onrender.com)
+  2. Environment → APP_BASE_URL → Paste URL
+  3. Save (auto-redeploys)
+
+Step 5: Set Telegram Webhook
+  Run LOCALLY (not in Render):
+  $ npm run set:webhook
+
+═══════════════════════════════════════════════════════════════════════════════
+  5. POST-DEPLOY COMMAND
+═══════════════════════════════════════════════════════════════════════════════
+
+After first deploy, run this locally:
+
+  npm run set:webhook
+
+This command:
+  • Reads APP_BASE_URL and TELEGRAM_BOT_TOKEN from your local .env
+  • Sets webhook to https://your-app.onrender.com/telegram/webhook
+  • Prints success/failure status
+  • Shows webhook info (URL, pending updates, errors)
+
+═══════════════════════════════════════════════════════════════════════════════
+  6. VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Health Check:
+  $ curl https://your-app.onrender.com/healthz
+  → {"status":"ok","service":"chat-heist"}
+
+Webhook Status:
+  $ curl https://api.telegram.org/bot<TOKEN>/getWebhookInfo
+  → Should show your Render URL
+
+Test Bot:
+  1. Open https://t.me/your_bot_username
+  2. Send /start
+  3. Click "Play Solo"
+  4. Game loads successfully
+
+═══════════════════════════════════════════════════════════════════════════════
+  7. TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+Build fails:
+  → Check Render logs for errors
+  → Verify all files committed to GitHub
+
+Database error:
+  → Verify DATABASE_URL format (should have sslmode=require or none)
+  → Check Supabase project is active
+
+Redis error:
+  → Verify UPSTASH_REDIS_REST_URL uses https://
+  → Verify using REST token (not Redis password)
+
+Webhook not working:
+  → Re-run: npm run set:webhook
+  → Check APP_BASE_URL has no trailing slash
+  → Verify bot has inline mode enabled in @BotFather
+
+═══════════════════════════════════════════════════════════════════════════════
+  8. SECURITY NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ No secrets in repository
+✅ All sensitive data in Render environment variables
+✅ HTTPS enforced automatically
+✅ Service role key never exposed to client
+✅ Webhook signature validated
+✅ Rate limiting enabled
+
+═══════════════════════════════════════════════════════════════════════════════
+
+For detailed guide, see: RENDER_DEPLOYMENT.md
+
+═══════════════════════════════════════════════════════════════════════════════
